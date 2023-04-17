@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <mpi.h>
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 /* Translation of the DNA bases
    A -> 0
@@ -56,11 +59,22 @@ int main(int argc, char *argv[] ) {
     int i, j;
     int *data1, *data2;
     int *result;
+    int *local_data1, *local_data2, *local_result;
+    int rows, rank, size;
     struct timeval  tv1, tv2;
 
     data1 = (int *) malloc(M*N*sizeof(int));
     data2 = (int *) malloc(M*N*sizeof(int));
     result = (int *) malloc(M*sizeof(int));
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    rows = M / size; // Número de filas que procesa cada proceso
+    local_data1 = (int *) malloc(rows*N*sizeof(int)); // Reserva de memoria para las filas que procesa cada proceso
+    local_data2 = (int *) malloc(rows*N*sizeof(int)); // Reserva de memoria para las filas que procesa cada proceso
+    local_result = (int *) malloc(rows*sizeof(int)); // Reserva de memoria para las filas que procesa cada proceso
 
     /* Initialize Matrices */
     for(i=0;i<M;i++) {
@@ -71,14 +85,19 @@ int main(int argc, char *argv[] ) {
         }
     }
 
+    MPI_Scatter(data1, rows*N, MPI_INT, local_data1, rows*N, MPI_INT, 0, MPI_COMM_WORLD); // Distribución de las filas de la matriz entre los procesos
+    MPI_Scatter(data2, rows*N, MPI_INT, local_data2, rows*N, MPI_INT, 0, MPI_COMM_WORLD); // Distribución de las filas de la matriz entre los procesos
+
     gettimeofday(&tv1, NULL);
 
-    for(i=0;i<M;i++) {
-        result[i]=0;
+    for(i=0;i<rows;i++) {
+        local_result[i]=0;
         for(j=0;j<N;j++) {
-            result[i] += base_distance(data1[i*N+j], data2[i*N+j]);
+            local_result[i] += base_distance(local_data1[i*N+j], local_data2[i*N+j]);
         }
     }
+
+    MPI_Gather(local_result, rows, MPI_INT, result, rows, MPI_INT, 0, MPI_COMM_WORLD); // Recolección de los resultados de cada proceso
 
     gettimeofday(&tv2, NULL);
     
@@ -90,16 +109,18 @@ int main(int argc, char *argv[] ) {
         for(i=0;i<M;i++) {
             checksum += result[i];
         }
-        printf("Checksum: %d\n ", checksum);
+        if(rank == 0) {
+            printf("Checksum: %d\n ", checksum);
+        }
     } else if (DEBUG == 2) {
         for(i=0;i<M;i++) {
-        printf(" %d \t ",result[i]);
+            printf(" %d \t ",result[i]);
         }
     } else {
         printf ("Time (seconds) = %lf\n", (double) microseconds/1E6);
     }    
 
     free(data1); free(data2); free(result);
-
+    MPI_Finalize();
     return 0;
 }
