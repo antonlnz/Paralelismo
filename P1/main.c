@@ -4,19 +4,19 @@
 #include <mpi.h>
 
 void inicializaCadena(char *cadena, int n){
-  int i;
-  for(i=0; i<n/2; i++){ // La mitad de la cadena son A's
-    cadena[i] = 'A';
-  }
-  for(i=n/2; i<3*n/4; i++){ // El siguiente 25% de la cadena son C's
-    cadena[i] = 'C';
-  }
-  for(i=3*n/4; i<9*n/10; i++){ // El siguiente 15% de la cadena son G's
-    cadena[i] = 'G';
-  }
-  for(i=9*n/10; i<n; i++){ // El ultimo 10% de la cadena son T's
-    cadena[i] = 'T';
-  }
+    int i;
+    for(i=0; i<n/2; i++){ // La mitad de la cadena son A's
+        cadena[i] = 'A';
+    }
+    for(i=n/2; i<3*n/4; i++){ // El siguiente 25% de la cadena son C's
+        cadena[i] = 'C';
+    }
+    for(i=3*n/4; i<9*n/10; i++){ // El siguiente 15% de la cadena son G's
+        cadena[i] = 'G';
+    }
+    for(i=9*n/10; i<n; i++){ // El ultimo 10% de la cadena son T's
+        cadena[i] = 'T';
+    }
 }
 
 int main(int argc, char *argv[]) {
