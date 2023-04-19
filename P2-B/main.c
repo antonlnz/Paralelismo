@@ -83,7 +83,7 @@ int MPI_FlattreeReduce(const void *sendbuf, void *recvbuf, int count, MPI_Dataty
         return MPI_ERR_RANK;
     }
 
-    if (datatype != MPI_INT && datatype != MPI_CHAR) { // Si el datatype no es int devuelve error
+    if (datatype != MPI_INT && datatype != MPI_CHAR) { // Si el datatype no es int ni char devuelve error
         printf("Invalid datatype value\n");
         return MPI_ERR_TYPE;
     }
