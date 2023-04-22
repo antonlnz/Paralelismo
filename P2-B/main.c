@@ -35,19 +35,14 @@ int MPI_BinomialBcast(void *buffer, int count, MPI_Datatype datatype, int root, 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
-    if (rank >= numprocs) { // Si el rank es mayor que el numero de procesos devuelve error
-        printf("Invalid rank value\n");
-        return MPI_ERR_RANK;
-    }
-
-    if (datatype != MPI_INT && datatype != MPI_CHAR) { // Si el datatype no es int devuelve error
-        printf("Invalid datatype value\n");
-        return MPI_ERR_TYPE;
-    }
-
     if (root != 0) { // Si el root no es 0 devuelve error
         printf("Invalid root value\n");
         return MPI_ERR_ROOT;
+    }
+
+    if (datatype != MPI_INT) { // Si el datatype no es int ni char devuelve error
+        printf("Invalid datatype value\n");
+        return MPI_ERR_TYPE;
     }
 
     if (rank != 0) {
@@ -78,19 +73,9 @@ int MPI_FlattreeReduce(const void *sendbuf, void *recvbuf, int count, MPI_Dataty
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
-    if (rank >= numprocs) { // Si el rank es mayor que el numero de procesos devuelve error
-        printf("Invalid rank value\n");
-        return MPI_ERR_RANK;
-    }
-
-    if (datatype != MPI_INT && datatype != MPI_CHAR) { // Si el datatype no es int ni char devuelve error
+    if (datatype != MPI_INT) { // Si el datatype no es int ni char devuelve error
         printf("Invalid datatype value\n");
         return MPI_ERR_TYPE;
-    }
-
-    if (root != 0) {
-        printf("Invalid root value\n");
-        return MPI_ERR_ROOT;
     }
 
     if(rank == root) { // El proceso root recibe los datos de todos los procesos y los suma
@@ -99,7 +84,7 @@ int MPI_FlattreeReduce(const void *sendbuf, void *recvbuf, int count, MPI_Dataty
         // Recibe el count de todos los demas procesos y los suma a su propio count
         for(i = 0; i < numprocs; i++) { // Recibe el count de todos los procesos
             if(i != root) { // Si el proceso no es root, recibe el count
-                if(MPI_Recv(&rec_data, count, datatype, i, 0, comm, MPI_STATUS_IGNORE)) { // Recibe el count del proceso i
+                if(MPI_Recv(&rec_data, count, datatype, i, 0, comm, MPI_STATUS_IGNORE)) { // Recibe el rec_data del proceso i
                     printf("MPI_Recv function returned error\n");
                     return MPI_ERR_OP;
                 }

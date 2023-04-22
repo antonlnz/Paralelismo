@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
         MPI_Recv(&n, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // El resto de procesos reciben el tamaño de la cadena del proceso 0
         MPI_Recv(&L, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // El resto de procesos reciben la letra que se quiere contar del proceso 0
     }
-  
+    
     cadena = (char *) malloc(n*sizeof(char));
     inicializaCadena(cadena, n);
     
@@ -59,14 +59,14 @@ int main(int argc, char *argv[]) {
 
     if(rank == 0) {
         int aux;
-        printf("El numero de apariciones en el proceso %d de la letra %c es %d\n", rank, L, count); // Imprimimos el resultado del proceso 0 antes de la suma de todos los procesos
+        //printf("El numero de apariciones en el proceso %d de la letra %c es %d\n", rank, L, count); // Imprimimos el resultado del proceso 0 antes de la suma de todos los procesos
         for(i=1; i<numprocs; i++) {
             MPI_Recv(&aux, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Recibimos los resultados de los procesos distintos al 0
             count += aux;
         }
         printf("El numero de apariciones de la letra %c es %d\n", L, count); // Imprimimos el resultado final (la suma de todos)
     } else {
-        printf("El numero de apariciones en el proceso %d de la letra %c es %d\n", rank, L, count); // Imprimimos el resultado de los procesos distintos al 0
+        //printf("El numero de apariciones en el proceso %d de la letra %c es %d\n", rank, L, count); // Imprimimos el resultado de los procesos distintos al 0
         MPI_Send(&count, 1, MPI_INT, 0, 0, MPI_COMM_WORLD); // Enviamos el count de cada proceso al proceso 0
     }
     
