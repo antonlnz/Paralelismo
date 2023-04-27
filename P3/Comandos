@@ -1,0 +1,3 @@
+mpicc -DDEBUG=2 similarity.c
+mpirun -n 1 ./a.out > single_core
+mpirun -n 3 ./a.out > multi_core

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <mpi.h>
+#include <math.h>
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -62,65 +63,83 @@ int main(int argc, char *argv[] ) {
     int *local_data1, *local_data2, *local_result;
     int rows, rank, size;
     struct timeval  tv1, tv2;
-
-    data1 = (int *) malloc(M*N*sizeof(int));
-    data2 = (int *) malloc(M*N*sizeof(int));
-    result = (int *) malloc(M*sizeof(int));
+    struct timeval mytv0, mytv3;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    rows = M / size; // Número de filas que procesa cada proceso
+    rows = ceil((float)M / size); // Número de filas que procesa cada proceso
+
+    if (rank == 0) {
+        data1 = (int *) malloc(M*N*sizeof(int));
+        data2 = (int *) malloc(M*N*sizeof(int));
+        result = (int *) malloc(M*N*sizeof(int));
+    }
+
     local_data1 = (int *) malloc(rows*N*sizeof(int)); // Reserva de memoria para las filas que procesa cada proceso
     local_data2 = (int *) malloc(rows*N*sizeof(int)); // Reserva de memoria para las filas que procesa cada proceso
     local_result = (int *) malloc(rows*sizeof(int)); // Reserva de memoria para las filas que procesa cada proceso
 
-    /* Initialize Matrices */
-    for(i=0;i<M;i++) {
-        for(j=0;j<N;j++) {
-            /* random with 20% gap proportion */
-            data1[i*N+j] = fast_rand();
-            data2[i*N+j] = fast_rand();
+    if (rank == 0) {
+        /* Initialize Matrices */
+        for(i=0;i<M;i++) {
+            for(j=0;j<N;j++) {
+                /* random with 20% gap proportion */
+                data1[i*N+j] = fast_rand();
+                data2[i*N+j] = fast_rand();
+            }
         }
     }
 
+    gettimeofday(&mytv0, NULL);
     MPI_Scatter(data1, rows*N, MPI_INT, local_data1, rows*N, MPI_INT, 0, MPI_COMM_WORLD); // Distribución de las filas de la matriz entre los procesos
     MPI_Scatter(data2, rows*N, MPI_INT, local_data2, rows*N, MPI_INT, 0, MPI_COMM_WORLD); // Distribución de las filas de la matriz entre los procesos
-
+    
     gettimeofday(&tv1, NULL);
-
-    for(i=0;i<rows;i++) {
+    int auxRows;
+    if (rank != size-1) {
+        auxRows = rows;
+    } else {
+        auxRows = M - rows*(size - 1);
+    }
+    for(i=0;i<auxRows;i++) {
         local_result[i]=0;
         for(j=0;j<N;j++) {
             local_result[i] += base_distance(local_data1[i*N+j], local_data2[i*N+j]);
         }
     }
+    gettimeofday(&tv2, NULL);
 
     MPI_Gather(local_result, rows, MPI_INT, result, rows, MPI_INT, 0, MPI_COMM_WORLD); // Recolección de los resultados de cada proceso
-
-    gettimeofday(&tv2, NULL);
+    gettimeofday(&mytv3, NULL);
     
     int microseconds = (tv2.tv_usec - tv1.tv_usec)+ 1000000 * (tv2.tv_sec - tv1.tv_sec);
+    int myMicroseconds = ((mytv3.tv_usec - mytv0.tv_usec)+ 1000000 * (mytv3.tv_sec - mytv0.tv_sec)) - microseconds;
 
     /* Display result */
     if (DEBUG == 1) {
-        int checksum = 0;
-        for(i=0;i<M;i++) {
-            checksum += result[i];
-        }
-        if(rank == 0) {
+        if (rank == 0) {
+            int checksum = 0;
+            for(i=0;i<M;i++) {
+                checksum += result[i];
+            }
             printf("Checksum: %d\n ", checksum);
         }
-    } else if (DEBUG == 2) {
+    } else if (DEBUG == 2 && rank ==0) {
         for(i=0;i<M;i++) {
             printf(" %d \t ",result[i]);
         }
     } else {
-        printf ("Time (seconds) = %lf\n", (double) microseconds/1E6);
-    }    
+        printf ("Computation time (seconds) = %lf\n", (double) microseconds/1E6);
+        printf ("Colective's time (seconds) = %lf\n", (double) myMicroseconds/1E6);
+    }
 
-    free(data1); free(data2); free(result);
+    if (rank == 0) {
+        free(data1); free(data2); free(result);
+    }
+
+    free(local_data1); free(local_data2); free(local_result);
     MPI_Finalize();
     return 0;
 }
