@@ -56,7 +56,6 @@ int base_distance(int base1, int base2){
 }
 
 int main(int argc, char *argv[]) {
-
     int i, j;
     int *data1, *data2; // Matrices de datos
     int *result; // Resultado de la distancia entre las filas de las matrices
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
     if (rank == 0) { // El proceso 0 tiene que reservar memoria para las matrices de datos iniciales y resultado
         data1 = (int *) malloc(M*N*sizeof(int));
         data2 = (int *) malloc(M*N*sizeof(int));
-        result = (int *) malloc(M*N*sizeof(int));
+        result = (int *) malloc(M*sizeof(int));
     }
 
     local_data1 = (int *) malloc(rows*N*sizeof(int)); // Reserva de memoria para la matriz que procesa cada proceso (el proceso 0 también reserva memoria para su matriz local)
@@ -133,8 +132,8 @@ int main(int argc, char *argv[]) {
             printf(" %d \t ",result[i]);
         }
     } else {
-        printf ("Computation time (seconds) = %lf\n", (double) microseconds/1E6); // Cada proceso muestra su tiempo de computación
-        printf ("Colective's time (seconds) = %lf\n", (double) myMicroseconds/1E6); // Cada proceso muestra su tiempo de ejecución de colectivas
+        printf ("(%d) Computation time (seconds) = %lf\n",rank, (double) microseconds/1E6); // Cada proceso muestra su tiempo de computación
+        printf ("(%d) Colective's time (seconds) = %lf\n",rank, (double) myMicroseconds/1E6); // Cada proceso muestra su tiempo de ejecución de colectivas
     }
 
     if (rank == 0) { // Solo el proceso 0 libera la memoria de las matrices de datos y del resultado
